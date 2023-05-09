@@ -22,7 +22,7 @@ class RegisterViewModel @Inject constructor(): ViewModel() {
         if(name.value.isNotBlank() && rollNo.value.isNotBlank() && email.value.isNotBlank() && password.value.length >= 6 && rePassword.value == password.value)
         {
             Firebase.auth.createUserWithEmailAndPassword(email.value,password.value).addOnSuccessListener {
-                val student = StudentModel(Firebase.auth.currentUser!!.uid, name.value, email.value, rollNo.value)
+                val student = StudentModel(Firebase.auth.currentUser!!.uid, name.value, email.value, rollNo.value, listOf())
 
                 db.add(student).addOnSuccessListener {
                     onSuccess()

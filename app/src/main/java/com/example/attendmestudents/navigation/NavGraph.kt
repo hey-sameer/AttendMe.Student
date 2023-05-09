@@ -6,6 +6,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.attendmestudents.screen.HomeScreen
 import com.example.attendmestudents.screen.LoginScreen
 import com.example.attendmestudents.screen.RegisterScreen
 
@@ -23,7 +24,7 @@ fun SetUpNavGraph(
             RegisterScreen(navHostController)
         }
         composable(route = Screens.HomeScreen.route){
-//            HomeScreen(navHostController)
+            HomeScreen(navHostController)
         }
     }
 }
