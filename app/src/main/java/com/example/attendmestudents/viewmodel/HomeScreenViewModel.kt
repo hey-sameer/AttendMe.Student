@@ -21,7 +21,6 @@ import kotlin.math.log
 class HomeScreenViewModel@Inject constructor() : ViewModel() {
     val classId = mutableStateOf("")
     val classesIdList = mutableStateOf<List<String>>(emptyList())
-
     val enrolledClassesList = mutableStateOf<List<ClassesModel>>(emptyList())
     private var enrolledList = mutableListOf<ClassesModel>()
     private val studentDb = Firebase.firestore.collection("Students")
@@ -52,7 +51,13 @@ class HomeScreenViewModel@Inject constructor() : ViewModel() {
                 val classQuery = classDb.whereEqualTo("classId",classId.value).get().await()
                 if(classQuery.documents.isNotEmpty()){
                     studentDb.document(doc.id).update("classes",classesIdList.value).addOnSuccessListener {
-                        onSuccess()
+                        for(classes in classQuery){
+                           var noOfStudent =  classes.get("noOfStudents").toString().toInt()
+                            noOfStudent++
+                            classDb.document(classes.id).update("noOfStudents",noOfStudent).addOnSuccessListener {
+                                onSuccess()
+                            }
+                        }
                     }.addOnFailureListener {
                             onFailure(it.message)
                     }
@@ -89,7 +94,7 @@ class HomeScreenViewModel@Inject constructor() : ViewModel() {
             val classQuery  = classDb.whereEqualTo("classId",classId).get().await()
             if(classQuery.documents.isNotEmpty()){
                 for(doc in classQuery){
-                    var classes = ClassesModel(doc.get("batch").toString(),doc.get("className").toString(),doc.get("department").toString(),doc.get("profId").toString(),doc.get("classId").toString())
+                    var classes = ClassesModel(doc.get("batch").toString(),doc.get("className").toString(),doc.get("department").toString(),doc.get("profId").toString(),doc.get("classId").toString(),doc.get("noOfStudents").toString().toInt())
                     enrolledList.add(classes)
                 }
                 enrolledClassesList.value = enrolledList

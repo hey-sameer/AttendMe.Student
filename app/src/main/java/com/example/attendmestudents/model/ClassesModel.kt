@@ -5,5 +5,6 @@ data class ClassesModel(
     val className : String,
     val department : String,
     val profId : String,
-    val classId : String
+    val classId : String,
+    val noOfStudents : Int
 )
