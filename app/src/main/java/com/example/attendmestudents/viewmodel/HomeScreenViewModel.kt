@@ -20,7 +20,7 @@ import kotlin.math.log
 @HiltViewModel
 class HomeScreenViewModel@Inject constructor() : ViewModel() {
     val classId = mutableStateOf("")
-    val classesIdList = mutableStateOf<List<String>>(emptyList())
+    private val classesIdList = mutableStateOf<List<String>>(emptyList())
     val enrolledClassesList = mutableStateOf<List<ClassesModel>>(emptyList())
     private var enrolledList = mutableListOf<ClassesModel>()
     private val studentDb = Firebase.firestore.collection("Students")

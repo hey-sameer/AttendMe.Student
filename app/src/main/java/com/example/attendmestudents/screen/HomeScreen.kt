@@ -1,5 +1,6 @@
 package com.example.attendmestudents.screen
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -59,10 +60,12 @@ fun HomeScreen(navHostController: NavHostController) {
         ) {
             UserInfoCard(Modifier.weight(3f))
             EnrolledClassList(viewModel.enrolledClassesList.value,Modifier.weight(6f))
-            JoinClass(onEnrollClick = {
+            JoinClass(onEnrollClick = {param->
+                viewModel.classId.value = param
                 viewModel.enrollInClass(
                     onSuccess = {
                         viewModel.classId.value = ""
+                        viewModel.getAllEnrolledClasses()
                     },
                     onFailure = {
                         Toast.makeText(
@@ -81,6 +84,7 @@ fun HomeScreen(navHostController: NavHostController) {
 
 @Composable
 fun EnrolledClassList(classes: List<ClassesModel>,modifier: Modifier = Modifier) {
+    Log.d("@@Home", classes.toString())
 LazyColumn(modifier = modifier){
     items(items = classes){classModel ->
         Card(modifier = Modifier
