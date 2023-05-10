@@ -29,6 +29,10 @@ class HomeScreenViewModel@Inject constructor() : ViewModel() {
     init {
         getAllEnrolledClasses()
     }
+
+    fun signOut(){
+        auth.signOut()
+    }
     fun enrollInClass(onSuccess: ()-> Unit, onFailure:(String?) -> Unit) = CoroutineScope(Dispatchers.IO).launch {
         var idList = mutableListOf<String>()
         val studentQuery = studentDb.whereEqualTo("id",auth.uid).get().await()

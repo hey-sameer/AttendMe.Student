@@ -3,7 +3,6 @@ package com.example.attendmestudents.screen
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,13 +14,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +48,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.attendmestudents.R
 import com.example.attendmestudents.model.ClassesModel
+import com.example.attendmestudents.navigation.Screens
 import com.example.attendmestudents.viewmodel.HomeScreenViewModel
 
 
@@ -52,7 +57,27 @@ import com.example.attendmestudents.viewmodel.HomeScreenViewModel
 fun HomeScreen(navHostController: NavHostController) {
     val viewModel: HomeScreenViewModel = viewModel()
     val context = LocalContext.current
-    Scaffold {
+    Scaffold(
+        topBar = {TopAppBar(
+            title = { Text(text = "Attend.Me-Student") },
+            actions = {
+                IconButton(onClick = {
+                    viewModel.signOut()
+                    navHostController.navigate(Screens.LoginScreen.route){
+                        popUpTo(Screens.LoginScreen.route){
+                            inclusive = true
+                        }
+                    }
+                }) {
+                    Icon(
+                        imageVector = Icons.Filled.ExitToApp,
+                        contentDescription = "sign out"
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.mediumTopAppBarColors()
+        )}
+    ) {
         Column(
             modifier = Modifier
                 .padding(it)

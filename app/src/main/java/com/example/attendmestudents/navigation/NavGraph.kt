@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import com.example.attendmestudents.screen.HomeScreen
 import com.example.attendmestudents.screen.LoginScreen
 import com.example.attendmestudents.screen.RegisterScreen
+import com.example.attendmestudents.screen.SplashScreen
 
 @Composable
 fun SetUpNavGraph(
@@ -16,7 +17,10 @@ fun SetUpNavGraph(
     context: Context,
     lifecycleOwner: LifecycleOwner
 ){
-    NavHost(navController = navHostController, startDestination = Screens.LoginScreen.route ){
+    NavHost(navController = navHostController, startDestination = Screens.SplashScreen.route ){
+        composable(route = Screens.SplashScreen.route){
+            SplashScreen(navHostController)
+        }
         composable(route = Screens.LoginScreen.route){
             LoginScreen(navHostController)
         }
