@@ -101,8 +101,44 @@ class QRScannerViewModel@Inject constructor(private val studentModel: StudentMod
                     val current = LocalDate.now().format(formatter)
                     val dateAndTime = DateAndTimeModel(current)
                     val attendanceQuery = attendanceDb.whereEqualTo("date",current).get().await()
-
+                    var check = false
                     if(attendanceQuery.documents.isNotEmpty()){
+                        for(date in attendanceQuery){
+                            var curr = doc.get("date").toString()
+                            if(curr == current){
+                                val addStudentListDb = Firebase.firestore.collection("Classes/${doc.id}/Attendance/${date.id}/StudentList")
+                                val studentQuery = addStudentListDb.whereEqualTo("id",auth.uid).get().await()
+                                if(studentQuery.documents.isNotEmpty()){
+                                    Log.d("@@Attendance", "Already marked")
+                                }else{
+                                    val currStudent = AttendanceModel(auth.uid!!,studentModel.name,LocalDateTime.now().format(formatter))
+                                    addStudentListDb.add(currStudent).addOnSuccessListener {
+                                        onSuccess()
+                                    }
+                                }
+                                check = true
+                            }
+                        }
+                        if(!check){
+                            attendanceDb.add(current).await()
+                            for(date in attendanceQuery){
+                                var curr = doc.get("date").toString()
+                                if(curr == current){
+                                    val addStudentListDb = Firebase.firestore.collection("Classes/${doc.id}/Attendance/${date.id}/StudentList")
+                                    val studentQuery = addStudentListDb.whereEqualTo("id",auth.uid).get().await()
+                                    if(studentQuery.documents.isNotEmpty()){
+                                        Log.d("@@Attendance", "Already marked")
+                                    }else{
+                                        val currStudent = AttendanceModel(auth.uid!!,studentModel.name,LocalDateTime.now().format(formatter))
+                                        addStudentListDb.add(currStudent).addOnSuccessListener {
+                                            onSuccess()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }else{
+                        attendanceDb.add(current).await()
                         for(date in attendanceQuery){
                             var curr = doc.get("date").toString()
                             if(curr == current){
@@ -118,11 +154,9 @@ class QRScannerViewModel@Inject constructor(private val studentModel: StudentMod
                                 }
                             }
                         }
-                    }else{
-                        attendanceDb.add(dateAndTime)
                     }
 
-                    
+
 //                    if(attendanceQuery.documents.isNotEmpty()){
 //                        for(date in attendanceQuery){
 //                            val addStudentListDb = Firebase.firestore.collection("Classes/${doc.id}/Attendance/${date.id}/StudentList")
