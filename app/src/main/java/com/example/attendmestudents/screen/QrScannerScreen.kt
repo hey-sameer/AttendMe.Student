@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import android.util.Size
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -82,12 +83,13 @@ fun QrScannerScreen(viewModel : QRScannerViewModel,navHostController: NavHostCon
                         imageAnalysis.setAnalyzer(
                             ContextCompat.getMainExecutor(context),
                             QrCodeScanner.QrScannerAnalyzer { result ->
-
                                 if(!viewModel.isAttendanceInProgress.value)
-                                viewModel.dataFromQR(result, onSuccess = {navHostController.popBackStack()}){
+                                    viewModel.dataFromQR(result, onSuccess = {Toast.makeText(context,"Attendance mark successfully!", Toast.LENGTH_LONG).show();navHostController.popBackStack()}){
                                     when(viewModel.errorCode.value){
                                         1 -> Toast.makeText(context,"Attendance not marked: Invalid QR", Toast.LENGTH_LONG).show()
                                         2 -> Toast.makeText(context,"Attendance not marked: Expired QR", Toast.LENGTH_LONG).show()
+                                        5 -> Toast.makeText(context,"Attendance not marked: Network error(firebase)", Toast.LENGTH_LONG).show()
+                                        6 -> Toast.makeText(context,"Attendance not marked: Not registered for the class", Toast.LENGTH_LONG).show()
                                     }
                                 }
                             }

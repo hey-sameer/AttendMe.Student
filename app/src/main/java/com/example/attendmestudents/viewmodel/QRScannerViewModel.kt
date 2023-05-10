@@ -25,8 +25,8 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 @HiltViewModel
-class QRScannerViewModel@Inject constructor(private val studentModel: StudentModel) : ViewModel(){
-//aaaaaYYYY-MM-DDClassIDhh:mm:ss--hh:mm:ssaaaaa
+class QRScannerViewModel @Inject constructor(private val studentModel: StudentModel) : ViewModel() {
+    //aaaaaYYYY-MM-DDClassIDhh:mm:ss--hh:mm:ssaaaaa
     val isAttendanceInProgress = mutableStateOf(false)
     private val classId = mutableStateOf("")
     private val date = mutableStateOf("")
@@ -34,28 +34,41 @@ class QRScannerViewModel@Inject constructor(private val studentModel: StudentMod
     //0 -> no error
     //1 invalid qr
     //2 -> expired qr
+    //5 -> network failure at firebase
+    //6 -> not register for the class
     private val generationTime = mutableStateOf("")
     private val expirationTime = mutableStateOf("")
     private val classDb = Firebase.firestore.collection("Classes")
     private val auth = FirebaseAuth.getInstance()
+
     @RequiresApi(Build.VERSION_CODES.O)
-    fun dataFromQR(qrCodeHex: String, onSuccess: ()-> Unit, onFailure: () -> Unit) {
+    fun dataFromQR(qrCodeHex: String, onSuccess: () -> Unit, onFailure: () -> Unit) {
         Log.d("@@QR", qrCodeHex)
         isAttendanceInProgress.value = true
         val qrCodeASCII = hexToASCII(qrCodeHex)
-        if(parseQRCode(qrCodeASCII)) {
+        if (parseQRCode(qrCodeASCII)) {
             addAttendance(onSuccess)
-        }
-        else{
+        } else {
             isAttendanceInProgress.value = false
             onFailure()
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun parseQRCode(qrCode: String): Boolean{
-        if(qrCode.length != 44)
-        {
+    private fun parseQRCode(qrCode: String): Boolean {
+        var check = false
+        for (classes in studentModel.classes) {
+            if (classes == classId.value) {
+                check = true
+                break;
+            }
+        }
+        if (!check) {
+            errorCode.value = 6
+            return false
+        }
+
+        if (qrCode.length != 44) {
             errorCode.value = 2
             return false
         }
@@ -65,7 +78,7 @@ class QRScannerViewModel@Inject constructor(private val studentModel: StudentMod
         expirationTime.value = qrCode.substring(31, 39)
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
         val currentDate = LocalDate.now().format(formatter)
-        if(currentDate == null){
+        if (currentDate == null) {
             errorCode.value = 1
             return false
         }
@@ -76,16 +89,15 @@ class QRScannerViewModel@Inject constructor(private val studentModel: StudentMod
         val currentTime = LocalTime.now()
         val startTime = LocalTime.parse(generationTime.value)
         val endTime = LocalTime.parse(expirationTime.value)
-        if(currentTime == null || endTime == null)
-        {
+        if (currentTime == null || endTime == null) {
             errorCode.value = 1
             return false
         }
         Log.d("@Qr", "startTime $startTime , endTime $endTime")
         Log.d("@Qr", "class id ${classId.value} , date $currentDate")
-        return if(currentTime.isAfter(startTime) && currentTime.isBefore(endTime))
+        return if (currentTime.isAfter(startTime) && currentTime.isBefore(endTime))
             true
-        else{
+        else {
             errorCode.value = 2
             false
         }
@@ -93,44 +105,45 @@ class QRScannerViewModel@Inject constructor(private val studentModel: StudentMod
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun addAttendance(onSuccess: () -> Unit) = CoroutineScope(Dispatchers.IO).launch {
-        var check = false
-        for(classes in studentModel.classes){
-            if(classes == classId.value){
-                check = true
-            }
-        }
-        if(check){
-            if(classId.value.isNotEmpty()){
-                val classQuery = classDb.whereEqualTo("classId",classId.value).get().await()
-                if(classQuery.documents.isNotEmpty()){
-                    for(doc in classQuery){
-                        val attendanceDb = Firebase.firestore.collection("Classes/${doc.id}/Attendance")
-                        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-                        val current = LocalDate.now().format(formatter)
-                        val currStudent = AttendanceModel(auth.uid!!,studentModel.name,LocalDateTime.now().format(formatter))
-                        val attendanceQuery = attendanceDb.whereEqualTo("date",current).get().await()
-                        if(attendanceQuery.documents.isNotEmpty()){
-                            for(docs in attendanceQuery){
-                                attendanceDb.document(docs.id).update("studentList",FieldValue.arrayUnion(currStudent)).addOnSuccessListener {
+        if (classId.value.isNotEmpty()) {
+            val classQuery = classDb.whereEqualTo("classId", classId.value).get().await()
+            if (classQuery.documents.isNotEmpty()) {
+                for (doc in classQuery) {
+                    val attendanceDb =
+                        Firebase.firestore.collection("Classes/${doc.id}/Attendance")
+                    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                    val current = LocalDate.now().format(formatter)
+                    val currStudent = AttendanceModel(
+                        auth.uid!!,
+                        studentModel.name,
+                        LocalDateTime.now().format(formatter)
+                    )
+                    val attendanceQuery =
+                        attendanceDb.whereEqualTo("date", current).get().await()
+                    if (attendanceQuery.documents.isNotEmpty()) {
+                        for (docs in attendanceQuery) {
+                            attendanceDb.document(docs.id)
+                                .update("studentList", FieldValue.arrayUnion(currStudent))
+                                .addOnSuccessListener {
                                     onSuccess()
                                 }.addOnFailureListener {
-                                    Log.d("@@addAttendance",it.message.toString())
+                                    errorCode.value = 5
+                                    Log.d("@@Attendance", it.message.toString())
                                 }
-                            }
-                        }else{
-                            var studentList = mutableListOf<AttendanceModel>()
-                            studentList.add(currStudent)
-                            val dateAndTime = DateAndTimeModel(current,studentList)
-                            attendanceDb.add(dateAndTime)
                         }
-
+                    } else {
+                        var studentList = mutableListOf<AttendanceModel>()
+                        studentList.add(currStudent)
+                        val dateAndTime = DateAndTimeModel(current, studentList)
+                        attendanceDb.add(dateAndTime).addOnSuccessListener {
+                            Log.d("@@attendance", "marked")
+                            onSuccess()
+                        }
                     }
+
                 }
             }
-        }else{
-            Log.d("@@addAttendance","Not Registered")
         }
-
 
     }
 
