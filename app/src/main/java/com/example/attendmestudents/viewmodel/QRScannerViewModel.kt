@@ -5,8 +5,9 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.example.attendmestudents.navigation.DateAndTimeModel
-import com.example.attendmestudents.navigation.StudentModel
+import com.example.attendmestudents.model.DateAndTimeModel
+import com.example.attendmestudents.model.AttendanceModel
+import com.example.attendmestudents.model.StudentModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -22,41 +23,74 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 @HiltViewModel
-class QRScannerViewModel@Inject constructor(val studentModel: StudentModel) : ViewModel(){
+class QRScannerViewModel@Inject constructor(private val studentModel: StudentModel) : ViewModel(){
 //aaaaaYYYY-MM-DDClassIDhh:mm:ss--hh:mm:ssaaaaa
-    val classId = mutableStateOf("")
-    val date = mutableStateOf("")
-    val generationTime = mutableStateOf("")
-    val expirationTime = mutableStateOf("")
-    val valid = mutableStateOf(true)
+    val isAttendanceInProgress = mutableStateOf(false)
+    private val classId = mutableStateOf("")
+    private val date = mutableStateOf("")
+    val errorCode = mutableStateOf(0)
+    //0 -> no error
+    //1 invalid qr
+    //2 -> expired qr
+    private val generationTime = mutableStateOf("")
+    private val expirationTime = mutableStateOf("")
     private val classDb = Firebase.firestore.collection("Classes")
     private val auth = FirebaseAuth.getInstance()
     @RequiresApi(Build.VERSION_CODES.O)
-    fun parseQRCode(qrCode : String): Boolean {
-        if(qrCode.length == 42){
-            if(qrCode[9] != '-' || qrCode[12] != '-' || qrCode[23] != ':' || qrCode[26] != '-' || qrCode[29] != '-' || qrCode[30] != '-' || qrCode[33] != ':' || qrCode[36] != ':'){
-               valid.value = false
-            }else{
-                classId.value = qrCode.substring(15,19)
-                date.value = qrCode.substring(5,13)
-                generationTime.value = qrCode.substring(21,27)
-                expirationTime.value = qrCode.substring(31,37)
-                var formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-                var current = LocalDate.now().format(formatter)
-                if(date.value!=current){
-                    valid.value = false
-                }
-                val currentTime = LocalTime.now()
-                val startTime = LocalTime.parse(generationTime.value)
-                val endTime = LocalTime.parse(expirationTime.value)
-                valid.value = currentTime.isAfter(startTime) && currentTime.isBefore(endTime)
-            }
+    fun dataFromQR(qrCodeHex: String, onSuccess: ()-> Unit, onFailure: () -> Unit) {
+        Log.d("@@QR", qrCodeHex)
+        isAttendanceInProgress.value = true
+        val qrCodeASCII = hexToASCII(qrCodeHex)
+        if(parseQRCode(qrCodeASCII)) {
+            addAttendance(onSuccess)
         }
-        return valid.value
+        else{
+            isAttendanceInProgress.value = false
+            onFailure()
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun addAttendance() = CoroutineScope(Dispatchers.IO).launch {
+    private fun parseQRCode(qrCode: String): Boolean{
+        if(qrCode.length != 44)
+        {
+            errorCode.value = 2
+            return false
+        }
+        date.value = qrCode.substring(5, 15)
+        classId.value = qrCode.substring(15, 21)
+        generationTime.value = qrCode.substring(21, 29)
+        expirationTime.value = qrCode.substring(31, 39)
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val currentDate = LocalDate.now().format(formatter)
+        if(currentDate == null){
+            errorCode.value = 1
+            return false
+        }
+        if (date.value != currentDate) {
+            errorCode.value = 2
+            return false
+        }
+        val currentTime = LocalTime.now()
+        val startTime = LocalTime.parse(generationTime.value)
+        val endTime = LocalTime.parse(expirationTime.value)
+        if(currentTime == null || endTime == null)
+        {
+            errorCode.value = 1
+            return false
+        }
+        Log.d("@Qr", "startTime $startTime , endTime $endTime")
+        Log.d("@Qr", "class id ${classId.value} , date $currentDate")
+        return if(currentTime.isAfter(startTime) && currentTime.isBefore(endTime))
+            true
+        else{
+            errorCode.value = 2
+            false
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun addAttendance(onSuccess: () -> Unit) = CoroutineScope(Dispatchers.IO).launch {
         if(classId.value.isNotEmpty()){
             val classQuery = classDb.whereEqualTo("classId",classId.value).get().await()
             if(classQuery.documents.isNotEmpty()){
@@ -74,8 +108,10 @@ class QRScannerViewModel@Inject constructor(val studentModel: StudentModel) : Vi
                             if(studentQuery.documents.isNotEmpty()){
                                 Log.d("@@Attendance", "Already marked")
                             }else{
-                                val currStudent = StudentModel(auth.uid!!,studentModel.studentName,LocalDateTime.now().format(formatter))
-                                addStudentListDb.add(currStudent)
+                                val currStudent = AttendanceModel(auth.uid!!,studentModel.name,LocalDateTime.now().format(formatter))
+                                addStudentListDb.add(currStudent).addOnSuccessListener {
+                                    onSuccess()
+                                }
                             }
                         }
                     }
@@ -84,4 +120,17 @@ class QRScannerViewModel@Inject constructor(val studentModel: StudentModel) : Vi
         }
 
     }
+
+    private fun hexToASCII(hexValue: String): String {
+        val output = StringBuilder("")
+        var i = 0
+        while (i < hexValue.length) {
+            val str = hexValue.substring(i, i + 2)
+            output.append(str.toInt(16).toChar())
+            i += 2
+        }
+        return output.toString()
+    }
+
+
 }

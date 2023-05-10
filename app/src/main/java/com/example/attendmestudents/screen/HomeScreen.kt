@@ -60,25 +60,27 @@ fun HomeScreen(navHostController: NavHostController) {
     val viewModel: HomeScreenViewModel = viewModel()
     val context = LocalContext.current
     Scaffold(
-        topBar = {TopAppBar(
-            title = { Text(text = "Attend.Me-Student") },
-            actions = {
-                IconButton(onClick = {
-                    viewModel.signOut()
-                    navHostController.navigate(Screens.LoginScreen.route){
-                        popUpTo(Screens.LoginScreen.route){
-                            inclusive = true
+        topBar = {
+            TopAppBar(
+                title = { Text(text = "Attend.Me-Student") },
+                actions = {
+                    IconButton(onClick = {
+                        viewModel.signOut()
+                        navHostController.navigate(Screens.LoginScreen.route) {
+                            popUpTo(Screens.LoginScreen.route) {
+                                inclusive = true
+                            }
                         }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.ExitToApp,
+                            contentDescription = "sign out"
+                        )
                     }
-                }) {
-                    Icon(
-                        imageVector = Icons.Filled.ExitToApp,
-                        contentDescription = "sign out"
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.mediumTopAppBarColors()
-        )}
+                },
+                colors = TopAppBarDefaults.mediumTopAppBarColors()
+            )
+        }
     ) {
         Column(
             modifier = Modifier
@@ -86,8 +88,8 @@ fun HomeScreen(navHostController: NavHostController) {
                 .fillMaxSize()
         ) {
             UserInfoCard(Modifier.weight(3f))
-            EnrolledClassList(viewModel.enrolledClassesList.value,Modifier.weight(6f))
-            JoinClass(onEnrollClick = {param->
+            EnrolledClassList(viewModel.enrolledClassesList.value, Modifier.weight(6f))
+            JoinClass(onEnrollClick = { param ->
                 viewModel.classId.value = param
                 viewModel.enrollInClass(
                     onSuccess = {
@@ -106,36 +108,51 @@ fun HomeScreen(navHostController: NavHostController) {
             }, Modifier.weight(1f))
 
             ElevatedButton(
-                onClick = { navHostController.navigate(Screens.QRScannerScreen.route) },
+                onClick = {
+                    val student = viewModel.student.value
+                    navHostController.currentBackStackEntry?.savedStateHandle?.set("studentModel",
+                        student
+                    )
+                    navHostController.navigate(Screens.QRScannerScreen.route)
+                },
             ) {
-                Text(text = "Scan QR", maxLines = 1, overflow = TextOverflow.Visible, fontSize = 18.sp)
+                Text(
+                    text = "Scan QR",
+                    maxLines = 1,
+                    overflow = TextOverflow.Visible,
+                    fontSize = 18.sp
+                )
             }
 
         }
     }
 }
-
 
 
 @Composable
-fun EnrolledClassList(classes: List<ClassesModel>,modifier: Modifier = Modifier) {
+fun EnrolledClassList(classes: List<ClassesModel>, modifier: Modifier = Modifier) {
     Log.d("@@Home", classes.toString())
-LazyColumn(modifier = modifier){
-    items(items = classes){classModel ->
-        Card(modifier = Modifier
-            .fillMaxWidth()){
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = classModel.className, modifier = Modifier.padding(10.dp))
-                Text(text = classModel.batch, modifier = Modifier.padding(10.dp))
+    LazyColumn(modifier = modifier) {
+        items(items = classes) { classModel ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = classModel.className, modifier = Modifier.padding(10.dp))
+                    Text(text = classModel.batch, modifier = Modifier.padding(10.dp))
+                }
             }
         }
     }
-}
 }
 
 @Composable
 fun UserInfoCard(modifier: Modifier = Modifier) {
-    val viewModel : HomeScreenViewModel = viewModel()
+    val viewModel: HomeScreenViewModel = viewModel()
     Column(modifier = modifier) {
         Image(
             modifier = Modifier
@@ -159,6 +176,7 @@ fun UserInfoCard(modifier: Modifier = Modifier) {
         )
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JoinClass(onEnrollClick: (String) -> Unit, modifier: Modifier = Modifier) {

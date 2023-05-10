@@ -4,8 +4,8 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import android.util.Size
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -16,10 +16,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,9 +25,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -40,13 +34,7 @@ import com.example.attendmestudents.viewmodel.QRScannerViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun QrScannerScreen(navHostController: NavHostController, context: Context) {
-    var code by remember {
-        mutableStateOf("")
-    }
-    val viewModel : QRScannerViewModel = viewModel()
-//    val context = LocalContext.current
-    var key  = "ABV_IIITM"
+fun QrScannerScreen(viewModel : QRScannerViewModel,navHostController: NavHostController, context: Context) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember {
         ProcessCameraProvider.getInstance(context)
@@ -94,8 +82,13 @@ fun QrScannerScreen(navHostController: NavHostController, context: Context) {
                         imageAnalysis.setAnalyzer(
                             ContextCompat.getMainExecutor(context),
                             QrCodeScanner.QrScannerAnalyzer { result ->
-                                if(viewModel.parseQRCode(result)){
 
+                                if(!viewModel.isAttendanceInProgress.value)
+                                viewModel.dataFromQR(result, onSuccess = {navHostController.popBackStack()}){
+                                    when(viewModel.errorCode.value){
+                                        1 -> Toast.makeText(context,"Attendance not marked: Invalid QR", Toast.LENGTH_LONG).show()
+                                        2 -> Toast.makeText(context,"Attendance not marked: Expired QR", Toast.LENGTH_LONG).show()
+                                    }
                                 }
                             }
                         )

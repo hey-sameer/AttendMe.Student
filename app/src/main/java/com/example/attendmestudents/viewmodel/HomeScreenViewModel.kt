@@ -27,7 +27,7 @@ class HomeScreenViewModel@Inject constructor() : ViewModel() {
     private val classDb = Firebase.firestore.collection("Classes")
     private val auth = FirebaseAuth.getInstance()
     val check = mutableStateOf(true)
-    val student = mutableStateOf<StudentModel>(StudentModel("","","","", classesIdList.value))
+    val student = mutableStateOf(StudentModel("","","","", classesIdList.value))
     init {
         getAllEnrolledClasses()
         getStudent()
