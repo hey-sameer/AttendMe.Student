@@ -9,6 +9,7 @@ import com.example.attendmestudents.model.DateAndTimeModel
 import com.example.attendmestudents.model.AttendanceModel
 import com.example.attendmestudents.model.StudentModel
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -96,25 +97,46 @@ class QRScannerViewModel@Inject constructor(private val studentModel: StudentMod
             if(classQuery.documents.isNotEmpty()){
                 for(doc in classQuery){
                     val attendanceDb = Firebase.firestore.collection("Classes/${doc.id}/Attendance")
-                    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-                    val current = LocalDateTime.now().format(formatter)
+                    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                    val current = LocalDate.now().format(formatter)
                     val dateAndTime = DateAndTimeModel(current)
-                    attendanceDb.add(dateAndTime)
                     val attendanceQuery = attendanceDb.whereEqualTo("date",current).get().await()
+
                     if(attendanceQuery.documents.isNotEmpty()){
                         for(date in attendanceQuery){
-                            val addStudentListDb = Firebase.firestore.collection("Classes/${doc.id}/Attendance/${date.id}/StudentList")
-                            val studentQuery = addStudentListDb.whereEqualTo("id",auth.uid).get().await()
-                            if(studentQuery.documents.isNotEmpty()){
-                                Log.d("@@Attendance", "Already marked")
-                            }else{
-                                val currStudent = AttendanceModel(auth.uid!!,studentModel.name,LocalDateTime.now().format(formatter))
-                                addStudentListDb.add(currStudent).addOnSuccessListener {
-                                    onSuccess()
+                            var curr = doc.get("date").toString()
+                            if(curr == current){
+                                val addStudentListDb = Firebase.firestore.collection("Classes/${doc.id}/Attendance/${date.id}/StudentList")
+                                val studentQuery = addStudentListDb.whereEqualTo("id",auth.uid).get().await()
+                                if(studentQuery.documents.isNotEmpty()){
+                                    Log.d("@@Attendance", "Already marked")
+                                }else{
+                                    val currStudent = AttendanceModel(auth.uid!!,studentModel.name,LocalDateTime.now().format(formatter))
+                                    addStudentListDb.add(currStudent).addOnSuccessListener {
+                                        onSuccess()
+                                    }
                                 }
                             }
                         }
+                    }else{
+                        attendanceDb.add(dateAndTime)
                     }
+
+                    
+//                    if(attendanceQuery.documents.isNotEmpty()){
+//                        for(date in attendanceQuery){
+//                            val addStudentListDb = Firebase.firestore.collection("Classes/${doc.id}/Attendance/${date.id}/StudentList")
+//                            val studentQuery = addStudentListDb.whereEqualTo("id",auth.uid).get().await()
+//                            if(studentQuery.documents.isNotEmpty()){
+//                                Log.d("@@Attendance", "Already marked")
+//                            }else{
+//                                val currStudent = AttendanceModel(auth.uid!!,studentModel.name,LocalDateTime.now().format(formatter))
+//                                addStudentListDb.add(currStudent).addOnSuccessListener {
+//                                    onSuccess()
+//                                }
+//                            }
+//                        }
+//                    }
                 }
             }
         }
