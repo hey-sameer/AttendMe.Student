@@ -99,61 +99,29 @@ class QRScannerViewModel@Inject constructor(private val studentModel: StudentMod
                     val attendanceDb = Firebase.firestore.collection("Classes/${doc.id}/Attendance")
                     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
                     val current = LocalDate.now().format(formatter)
-                    val dateAndTime = DateAndTimeModel(current)
+                    val currStudent = AttendanceModel(auth.uid!!,studentModel.name,LocalDateTime.now().format(formatter))
                     val attendanceQuery = attendanceDb.whereEqualTo("date",current).get().await()
-                    var check = false
                     if(attendanceQuery.documents.isNotEmpty()){
-                        for(date in attendanceQuery){
-                            var curr = doc.get("date").toString()
-                            if(curr == current){
-                                val addStudentListDb = Firebase.firestore.collection("Classes/${doc.id}/Attendance/${date.id}/StudentList")
-                                val studentQuery = addStudentListDb.whereEqualTo("id",auth.uid).get().await()
-                                if(studentQuery.documents.isNotEmpty()){
-                                    Log.d("@@Attendance", "Already marked")
-                                }else{
-                                    val currStudent = AttendanceModel(auth.uid!!,studentModel.name,LocalDateTime.now().format(formatter))
-                                    addStudentListDb.add(currStudent).addOnSuccessListener {
-                                        onSuccess()
-                                    }
-                                }
-                                check = true
-                            }
+                        var studentList = mutableListOf<AttendanceModel>()
+                        for(doc in attendanceQuery){
+                          studentList  = doc.get("studentList") as MutableList<AttendanceModel>
                         }
-                        if(!check){
-                            attendanceDb.add(current).await()
-                            for(date in attendanceQuery){
-                                var curr = doc.get("date").toString()
-                                if(curr == current){
-                                    val addStudentListDb = Firebase.firestore.collection("Classes/${doc.id}/Attendance/${date.id}/StudentList")
-                                    val studentQuery = addStudentListDb.whereEqualTo("id",auth.uid).get().await()
-                                    if(studentQuery.documents.isNotEmpty()){
-                                        Log.d("@@Attendance", "Already marked")
-                                    }else{
-                                        val currStudent = AttendanceModel(auth.uid!!,studentModel.name,LocalDateTime.now().format(formatter))
-                                        addStudentListDb.add(currStudent).addOnSuccessListener {
-                                            onSuccess()
-                                        }
-                                    }
+                        for(student in studentList){
+                            if(student.id == auth.uid){
+                                Log.d("@@Attendance", "Already marked")
+                            }else{
+                                studentList.add(currStudent)
+                                for(doc in attendanceQuery){
+                                    attendanceDb.document(doc.id).update("studentList",studentList).await()
+                                    onSuccess()
                                 }
                             }
                         }
                     }else{
-                        attendanceDb.add(current).await()
-                        for(date in attendanceQuery){
-                            var curr = doc.get("date").toString()
-                            if(curr == current){
-                                val addStudentListDb = Firebase.firestore.collection("Classes/${doc.id}/Attendance/${date.id}/StudentList")
-                                val studentQuery = addStudentListDb.whereEqualTo("id",auth.uid).get().await()
-                                if(studentQuery.documents.isNotEmpty()){
-                                    Log.d("@@Attendance", "Already marked")
-                                }else{
-                                    val currStudent = AttendanceModel(auth.uid!!,studentModel.name,LocalDateTime.now().format(formatter))
-                                    addStudentListDb.add(currStudent).addOnSuccessListener {
-                                        onSuccess()
-                                    }
-                                }
-                            }
-                        }
+                        var studentList = mutableListOf<AttendanceModel>()
+                        studentList.add(currStudent)
+                        val dateAndTime = DateAndTimeModel(current,studentList)
+                        attendanceDb.add(dateAndTime)
                     }
 
 
