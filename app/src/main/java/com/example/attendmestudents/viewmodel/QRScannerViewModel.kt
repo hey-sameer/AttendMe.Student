@@ -93,33 +93,44 @@ class QRScannerViewModel@Inject constructor(private val studentModel: StudentMod
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun addAttendance(onSuccess: () -> Unit) = CoroutineScope(Dispatchers.IO).launch {
-        if(classId.value.isNotEmpty()){
-            val classQuery = classDb.whereEqualTo("classId",classId.value).get().await()
-            if(classQuery.documents.isNotEmpty()){
-                for(doc in classQuery){
-                    val attendanceDb = Firebase.firestore.collection("Classes/${doc.id}/Attendance")
-                    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-                    val current = LocalDate.now().format(formatter)
-                    val currStudent = AttendanceModel(auth.uid!!,studentModel.name,LocalDateTime.now().format(formatter))
-                    val attendanceQuery = attendanceDb.whereEqualTo("date",current).get().await()
-                    if(attendanceQuery.documents.isNotEmpty()){
-                       for(docs in attendanceQuery){
-                           attendanceDb.document(docs.id).update("studentList",FieldValue.arrayUnion(currStudent)).addOnSuccessListener {
-                               onSuccess()
-                           }.addOnFailureListener {
-                               Log.d("@@addAttendance",it.message.toString())
-                           }
-                       }
-                    }else{
-                        var studentList = mutableListOf<AttendanceModel>()
-                        studentList.add(currStudent)
-                        val dateAndTime = DateAndTimeModel(current,studentList)
-                        attendanceDb.add(dateAndTime)
-                    }
-
-                }
+        var check = false
+        for(classes in studentModel.classes){
+            if(classes == classId.value){
+                check = true
             }
         }
+        if(check){
+            if(classId.value.isNotEmpty()){
+                val classQuery = classDb.whereEqualTo("classId",classId.value).get().await()
+                if(classQuery.documents.isNotEmpty()){
+                    for(doc in classQuery){
+                        val attendanceDb = Firebase.firestore.collection("Classes/${doc.id}/Attendance")
+                        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                        val current = LocalDate.now().format(formatter)
+                        val currStudent = AttendanceModel(auth.uid!!,studentModel.name,LocalDateTime.now().format(formatter))
+                        val attendanceQuery = attendanceDb.whereEqualTo("date",current).get().await()
+                        if(attendanceQuery.documents.isNotEmpty()){
+                            for(docs in attendanceQuery){
+                                attendanceDb.document(docs.id).update("studentList",FieldValue.arrayUnion(currStudent)).addOnSuccessListener {
+                                    onSuccess()
+                                }.addOnFailureListener {
+                                    Log.d("@@addAttendance",it.message.toString())
+                                }
+                            }
+                        }else{
+                            var studentList = mutableListOf<AttendanceModel>()
+                            studentList.add(currStudent)
+                            val dateAndTime = DateAndTimeModel(current,studentList)
+                            attendanceDb.add(dateAndTime)
+                        }
+
+                    }
+                }
+            }
+        }else{
+            Log.d("@@addAttendance","Not Registered")
+        }
+
 
     }
 
