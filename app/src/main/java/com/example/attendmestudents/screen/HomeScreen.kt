@@ -68,6 +68,7 @@ fun HomeScreen(navHostController: NavHostController) {
                         viewModel.getAllEnrolledClasses()
                     },
                     onFailure = {
+                        viewModel.getAllEnrolledClasses()
                         Toast.makeText(
                             context,
                             "Some error: $it",

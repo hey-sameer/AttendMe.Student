@@ -22,7 +22,6 @@ class HomeScreenViewModel@Inject constructor() : ViewModel() {
     val classId = mutableStateOf("")
     private val classesIdList = mutableStateOf<List<String>>(emptyList())
     val enrolledClassesList = mutableStateOf<List<ClassesModel>>(emptyList())
-    private var enrolledList = mutableListOf<ClassesModel>()
     private val studentDb = Firebase.firestore.collection("Students")
     private val classDb = Firebase.firestore.collection("Classes")
     private val auth = FirebaseAuth.getInstance()
@@ -77,28 +76,32 @@ class HomeScreenViewModel@Inject constructor() : ViewModel() {
 
 
     fun getAllEnrolledClasses() = CoroutineScope(Dispatchers.IO).launch {
+        val enrolledList = mutableListOf<ClassesModel>()
         var idList = mutableListOf<String>()
         val studentQuery = studentDb.whereEqualTo("id",auth.uid).get().await()
         if(studentQuery.documents.isNotEmpty()){
             for(doc in studentQuery){
                 idList = doc.get("classes") as MutableList<String>
             }
-            for(classIds in idList){
-                if(classIds == classId.value){
-                    check.value = false
-                    break
-                }
-            }
+            Log.d("@@HomeVM", idList.toString())
         }
         for(classId in idList){
             val classQuery  = classDb.whereEqualTo("classId",classId).get().await()
             if(classQuery.documents.isNotEmpty()){
                 for(doc in classQuery){
-                    var classes = ClassesModel(doc.get("batch").toString(),doc.get("className").toString(),doc.get("department").toString(),doc.get("profId").toString(),doc.get("classId").toString(),doc.get("noOfStudents").toString().toInt())
+                    var classes = ClassesModel(
+                        doc.get("batch").toString(),
+                        doc.get("className").toString(),
+                        doc.get("department").toString(),
+                        doc.get("profId").toString(),
+                        doc.get("classId").toString(),
+                        doc.get("noOfStudents").toString().toInt()
+                    )
                     enrolledList.add(classes)
                 }
-                enrolledClassesList.value = enrolledList
             }
         }
+        enrolledClassesList.value = enrolledList
+        Log.d("@@HomeVm", enrolledClassesList.value.toString())
     }
 }
