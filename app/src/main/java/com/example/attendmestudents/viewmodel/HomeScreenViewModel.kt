@@ -116,8 +116,15 @@ class HomeScreenViewModel@Inject constructor() : ViewModel() {
 
     fun getStudent() = CoroutineScope(Dispatchers.IO).launch {
         val studentQuery = studentDb.whereEqualTo("id",auth.uid).get().await()
+
         if(studentQuery.documents.isNotEmpty()){
             for(doc in studentQuery){
+                val list = doc.get("classes") as List<*>
+                val classList = mutableListOf<String>()
+                list.forEach{
+                    classList.add(it.toString())
+                }
+                classesIdList.value = classList
                 student.value = StudentModel(auth.uid!!,doc.get("name").toString(),doc.get("email").toString(),doc.get("rollNo").toString(),classesIdList.value)
             }
         }
