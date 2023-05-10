@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.attendmestudents.screen.HomeScreen
 import com.example.attendmestudents.screen.LoginScreen
+import com.example.attendmestudents.screen.QrScannerScreen
 import com.example.attendmestudents.screen.RegisterScreen
 import com.example.attendmestudents.screen.SplashScreen
 
@@ -29,6 +30,9 @@ fun SetUpNavGraph(
         }
         composable(route = Screens.HomeScreen.route){
             HomeScreen(navHostController)
+        }
+        composable(route = Screens.QRScannerScreen.route){
+            QrScannerScreen(navHostController,context)
         }
     }
 }

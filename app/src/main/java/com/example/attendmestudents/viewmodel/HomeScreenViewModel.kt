@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.example.attendmestudents.model.ClassesModel
+import com.example.attendmestudents.model.StudentModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.ktx.firestore
@@ -26,8 +27,10 @@ class HomeScreenViewModel@Inject constructor() : ViewModel() {
     private val classDb = Firebase.firestore.collection("Classes")
     private val auth = FirebaseAuth.getInstance()
     val check = mutableStateOf(true)
+    val student = mutableStateOf<StudentModel>(StudentModel("","","","", classesIdList.value))
     init {
         getAllEnrolledClasses()
+        getStudent()
     }
 
     fun signOut(){
@@ -39,8 +42,10 @@ class HomeScreenViewModel@Inject constructor() : ViewModel() {
         if(studentQuery.documents.isNotEmpty()){
             for(doc in studentQuery){
                 idList = doc.get("classes") as MutableList<String>
+                Log.d("@@Enroll",idList.toString())
             }
             for(classIds in idList){
+                Log.d("@@Enroll","${idList.toString()} and ${classId.value}")
                 if(classIds == classId.value){
                     check.value = false
                     break
@@ -107,5 +112,14 @@ class HomeScreenViewModel@Inject constructor() : ViewModel() {
         }
         enrolledClassesList.value = enrolledList
         Log.d("@@HomeVm", enrolledClassesList.value.toString())
+    }
+
+    fun getStudent() = CoroutineScope(Dispatchers.IO).launch {
+        val studentQuery = studentDb.whereEqualTo("id",auth.uid).get().await()
+        if(studentQuery.documents.isNotEmpty()){
+            for(doc in studentQuery){
+                student.value = StudentModel(auth.uid!!,doc.get("name").toString(),doc.get("email").toString(),doc.get("rollNo").toString(),classesIdList.value)
+            }
+        }
     }
 }

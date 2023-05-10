@@ -3,6 +3,7 @@ package com.example.attendmestudents.screen
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.Card
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -102,6 +104,13 @@ fun HomeScreen(navHostController: NavHostController) {
                     },
                 )
             }, Modifier.weight(1f))
+
+            ElevatedButton(
+                onClick = { navHostController.navigate(Screens.QRScannerScreen.route) },
+            ) {
+                Text(text = "Scan QR", maxLines = 1, overflow = TextOverflow.Visible, fontSize = 18.sp)
+            }
+
         }
     }
 }
@@ -126,6 +135,7 @@ LazyColumn(modifier = modifier){
 
 @Composable
 fun UserInfoCard(modifier: Modifier = Modifier) {
+    val viewModel : HomeScreenViewModel = viewModel()
     Column(modifier = modifier) {
         Image(
             modifier = Modifier
@@ -137,18 +147,12 @@ fun UserInfoCard(modifier: Modifier = Modifier) {
         )
         Text(
             modifier = Modifier.fillMaxWidth(),
-            text = "X (TODO)",
+            text = viewModel.student.value.name,
             style = TextStyle(fontSize = 32.sp, fontWeight = FontWeight.Black),
             textAlign = TextAlign.Center
         )
         Text(
-            text = "Student: (TODO) Department",
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-            style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Medium)
-        )
-        Text(
-            text = "imt_2020086@iiitm.ac.in",
+            text = viewModel.student.value.email,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
             style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Medium),
