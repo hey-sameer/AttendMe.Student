@@ -86,11 +86,12 @@ fun QrScannerScreen(viewModel : QRScannerViewModel,navHostController: NavHostCon
                                 if(!viewModel.isAttendanceInProgress.value)
                                     viewModel.dataFromQR(result, onSuccess = {Toast.makeText(context,"Attendance mark successfully!", Toast.LENGTH_LONG).show();navHostController.popBackStack()}){
                                     when(viewModel.errorCode.value){
-                                        1 -> Toast.makeText(context,"Attendance not marked: Invalid QR", Toast.LENGTH_LONG).show()
-                                        2 -> Toast.makeText(context,"Attendance not marked: Expired QR", Toast.LENGTH_LONG).show()
-                                        5 -> Toast.makeText(context,"Attendance not marked: Network error(firebase)", Toast.LENGTH_LONG).show()
-                                        6 -> Toast.makeText(context,"Attendance not marked: Not registered for the class", Toast.LENGTH_LONG).show()
+                                        1 -> Toast.makeText(context,"Attendance not marked: Invalid QR", Toast.LENGTH_SHORT).show()
+                                        2 -> Toast.makeText(context,"Attendance not marked: Expired QR", Toast.LENGTH_SHORT).show()
+                                        5 -> Toast.makeText(context,"Attendance not marked: Network error(firebase)", Toast.LENGTH_SHORT).show()
+                                        6 -> Toast.makeText(context,"Attendance not marked: Not registered for the class", Toast.LENGTH_SHORT).show()
                                     }
+                                        navHostController.popBackStack()
                                 }
                             }
                         )

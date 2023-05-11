@@ -110,6 +110,7 @@ fun HomeScreen(navHostController: NavHostController) {
             ElevatedButton(
                 onClick = {
                     val student = viewModel.student.value
+                    Log.d("@@Homescreen", student.toString())
                     navHostController.currentBackStackEntry?.savedStateHandle?.set("studentModel",
                         student
                     )

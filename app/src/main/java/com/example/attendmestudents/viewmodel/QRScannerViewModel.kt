@@ -56,17 +56,6 @@ class QRScannerViewModel @Inject constructor(private val studentModel: StudentMo
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun parseQRCode(qrCode: String): Boolean {
-        var check = false
-        for (classes in studentModel.classes) {
-            if (classes == classId.value) {
-                check = true
-                break;
-            }
-        }
-        if (!check) {
-            errorCode.value = 6
-            return false
-        }
 
         if (qrCode.length != 44) {
             errorCode.value = 2
@@ -91,6 +80,19 @@ class QRScannerViewModel @Inject constructor(private val studentModel: StudentMo
         val endTime = LocalTime.parse(expirationTime.value)
         if (currentTime == null || endTime == null) {
             errorCode.value = 1
+            return false
+        }
+        var check = false
+        Log.d("@@", studentModel.classes.toString())
+        for (classes in studentModel.classes) {
+            Log.d("@@", "classId value: ${classId.value}")
+            if (classes == classId.value) {
+                check = true
+                break;
+            }
+        }
+        if (!check) {
+            errorCode.value = 6
             return false
         }
         Log.d("@Qr", "startTime $startTime , endTime $endTime")

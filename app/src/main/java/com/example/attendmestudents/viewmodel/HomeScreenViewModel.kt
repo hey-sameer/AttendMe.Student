@@ -111,6 +111,11 @@ class HomeScreenViewModel@Inject constructor() : ViewModel() {
             }
         }
         enrolledClassesList.value = enrolledList
+//        val tempList = mutableListOf<String>()
+//        enrolledClassesList.value.forEach{
+//            tempList.add(it.classId)
+//        }
+//        classesIdList.value = tempList
         Log.d("@@HomeVm", enrolledClassesList.value.toString())
     }
 
@@ -128,5 +133,6 @@ class HomeScreenViewModel@Inject constructor() : ViewModel() {
                 student.value = StudentModel(auth.uid!!,doc.get("name").toString(),doc.get("email").toString(),doc.get("rollNo").toString(),classesIdList.value)
             }
         }
+
     }
 }
