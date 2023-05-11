@@ -58,7 +58,7 @@ class QRScannerViewModel @Inject constructor(private val studentModel: StudentMo
     private fun parseQRCode(qrCode: String): Boolean {
 
         if (qrCode.length != 44) {
-            errorCode.value = 2
+            errorCode.value = 1
             return false
         }
         date.value = qrCode.substring(5, 15)
