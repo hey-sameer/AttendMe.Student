@@ -1,118 +1,94 @@
 package com.example.attendmestudents.screen
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
-import android.util.Size
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.Button
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.attendmestudents.qrScanner.QrCodeScanner
+import com.example.attendmestudents.R
 import com.example.attendmestudents.viewmodel.QRScannerViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun QrScannerScreen(viewModel : QRScannerViewModel,navHostController: NavHostController, context: Context) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val cameraProviderFuture = remember {
-        ProcessCameraProvider.getInstance(context)
-    }
-    var hasCamPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { granted ->
-            hasCamPermission = granted
-        }
-    )
-    LaunchedEffect(key1 = true) {
-        launcher.launch(Manifest.permission.CAMERA)
-    }
-    Surface() {
+fun QrScannerScreen(viewModel : QRScannerViewModel, navHostController: NavHostController) {
+    val scope = rememberCoroutineScope()
+    val showText = viewModel.errorMessage.value
+    Surface(modifier = Modifier) {
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp, vertical = 50.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceEvenly
         ) {
-            if(hasCamPermission){
-                AndroidView(
-                    factory = { context ->
-                        val previewView = PreviewView(context)
-                        val preview = Preview.Builder().build()
-                        val selector = CameraSelector.Builder()
-                            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                            .build()
-                        preview.setSurfaceProvider(previewView.surfaceProvider)
-                        val imageAnalysis =
-                            ImageAnalysis.Builder()
-                                .setTargetResolution(
-                                    Size(
-                                        previewView.width,
-                                        previewView.height
-                                    )
-                                )
-                                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                                .build()
-                        imageAnalysis.setAnalyzer(
-                            ContextCompat.getMainExecutor(context),
-                            QrCodeScanner.QrScannerAnalyzer { result ->
-                                if(!viewModel.isAttendanceInProgress.value)
-                                    viewModel.dataFromQR(result, onSuccess = {Toast.makeText(context,"Attendance mark successfully!", Toast.LENGTH_LONG).show();navHostController.popBackStack()}){
-                                    when(viewModel.errorCode.value){
-                                        1 -> Toast.makeText(context,"Attendance not marked: Invalid QR", Toast.LENGTH_SHORT).show()
-                                        2 -> Toast.makeText(context,"Attendance not marked: Expired QR", Toast.LENGTH_SHORT).show()
-                                        5 -> Toast.makeText(context,"Attendance not marked: Network error(firebase)", Toast.LENGTH_SHORT).show()
-                                        6 -> Toast.makeText(context,"Attendance not marked: Not registered for the class", Toast.LENGTH_SHORT).show()
-                                    }
-                                        navHostController.popBackStack()
-                                }
-                            }
+            ElevatedCard(
+                modifier = Modifier
+                    .padding(horizontal = 20.dp, vertical = 32.dp)
+                    .weight(3f),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "Scan QR Code",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 28.sp
                         )
-                        try {
-                            cameraProviderFuture.get().bindToLifecycle(
-                                lifecycleOwner,
-                                selector,
-                                preview,
-                                imageAnalysis
-                            )
-
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                        previewView
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-
+                    )
+                    Text(
+                        text = showText,
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        style = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.Center)
+                    )
+                }
             }
-
+            Image(
+                painter = painterResource(id = R.drawable.qr_code),
+                contentDescription = "qr",
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth()
+                    .weight(6f)
+            )
+            Button(
+                onClick = {
+                    scope.launch(Dispatchers.Main) {
+                        viewModel.startScan(
+                            onSuccess = {},
+                            onFailure = {},
+                        )
+                    }
+                },
+                modifier = Modifier
+            ) {
+                Text(text = "SCAN", modifier = Modifier.widthIn(min = 18.dp), style = MaterialTheme.typography.labelLarge)
+            }
         }
     }
 }
