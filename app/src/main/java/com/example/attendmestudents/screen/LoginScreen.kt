@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,6 +44,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -61,13 +63,15 @@ fun LoginScreen(navController: NavHostController) {
     var passwordVisible by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
-    val image = painterResource(id = R.drawable.login_image)
+    val image = painterResource(id = R.drawable.login_image_removebg_preview)
     val focusManager = LocalFocusManager.current
+    Surface {
+
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White), contentAlignment = Alignment.TopCenter
+                .background(MaterialTheme.colorScheme.surface), contentAlignment = Alignment.TopCenter
         ) {
 
             Image(
@@ -91,7 +95,7 @@ fun LoginScreen(navController: NavHostController) {
                         bottomStart = 0.dp
                     )
                 )
-                .background(whiteBackground)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
                 .padding(10.dp)
         ) {
 
@@ -101,7 +105,7 @@ fun LoginScreen(navController: NavHostController) {
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 2.sp
                 ),
-                fontSize = 30.sp
+                fontSize = 28.sp
             )
             Spacer(modifier = Modifier.padding(20.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -112,7 +116,7 @@ fun LoginScreen(navController: NavHostController) {
                     placeholder = { Text(text = "Email Address") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(0.8f),
-                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next, keyboardType = KeyboardType.Email),
                     keyboardActions = KeyboardActions(onNext = {
                         focusManager.moveFocus(
                             FocusDirection.Down
@@ -143,6 +147,7 @@ fun LoginScreen(navController: NavHostController) {
                     modifier = Modifier
                         .fillMaxWidth(0.8f)
                         .focusRequester(focusRequester = focusRequester),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done, keyboardType = KeyboardType.Password)
                 )
 
                 Spacer(modifier = Modifier.padding(10.dp))
@@ -187,83 +192,8 @@ fun LoginScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.padding(20.dp))
             }
 
-
+        }
         }
     }
 
 }
-
-
-/*
-Column(modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center) {
-            OutlinedTextField(
-                value = viewModel.email.value,
-                label = { Text(text = "Email") },
-                onValueChange = {
-                    viewModel.email.value = it
-                },
-                modifier = Modifier.padding(bottom = 10.dp)
-            )
-
-            OutlinedTextField(
-                value = viewModel.password.value,
-                label = { Text(text = "Password") },
-                onValueChange = {
-                    viewModel.password.value = it
-                },
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    val image = if(passwordVisible) R.drawable.baseline_visibility_24 else R.drawable.baseline_visibility_off_24
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(painter = painterResource(image), "")
-                    }
-                }
-            )
-            ClickableText(
-                text = AnnotatedString("or Register"),
-                onClick = { navHostController.navigate(Screens.RegisterScreen.route){
-                    popUpTo(route = Screens.LoginScreen.route){
-                        inclusive = true
-                    }
-                } },
-                style = TextStyle(
-                    color = Color.Blue,
-                    textDecoration = TextDecoration.Underline
-                )
-            )
-            Box(modifier = Modifier.fillMaxSize()) {
-                ElevatedButton(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(5.dp),
-                    onClick = {
-                        viewModel.login(
-                            onSuccess = {
-                                navHostController.navigate(Screens.HomeScreen.route) {
-                                    popUpTo(
-                                        Screens.LoginScreen.route,
-                                    ) { inclusive = true }
-                                }
-                            },
-                            onFailure = {
-                                Toast.makeText(
-                                    context,
-                                    "Some error: $it",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                            },
-                        )
-                    },
-                    colors = ButtonDefaults.buttonColors(Color.Gray)
-                ) {
-                    Text(
-                        text = "Continue", modifier = Modifier
-                            .padding(8.dp)
-                            .width(IntrinsicSize.Max)
-                    )
-                }
-            }
-        }
- */
