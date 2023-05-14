@@ -17,12 +17,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -41,6 +43,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -108,6 +111,7 @@ fun HomeScreen(navHostController: NavHostController) {
             }, Modifier.weight(1f))
 
             ElevatedButton(
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(bottom = 12.dp, start = 8.dp, end = 8.dp),
                 onClick = {
                     val student = viewModel.student.value
                     Log.d("@@Homescreen", student.toString())
@@ -118,10 +122,10 @@ fun HomeScreen(navHostController: NavHostController) {
                 },
             ) {
                 Text(
-                    text = "Scan QR",
+                    text = "Mark Attendance",
                     maxLines = 1,
                     overflow = TextOverflow.Visible,
-                    fontSize = 18.sp
+                    style = MaterialTheme.typography.labelLarge,
                 )
             }
 
@@ -137,14 +141,15 @@ fun EnrolledClassList(classes: List<ClassesModel>, modifier: Modifier = Modifier
         items(items = classes) { classModel ->
             Card(
                 modifier = Modifier
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
                     .fillMaxWidth()
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = classModel.className, modifier = Modifier.padding(10.dp))
-                    Text(text = classModel.batch, modifier = Modifier.padding(10.dp))
+                    Text(text = classModel.className, modifier = Modifier.padding(10.dp), style = MaterialTheme.typography.titleLarge)
+                    Text(text = classModel.batch, modifier = Modifier.padding(10.dp), style = MaterialTheme.typography.titleLarge)
                 }
             }
         }
@@ -191,16 +196,17 @@ fun JoinClass(onEnrollClick: (String) -> Unit, modifier: Modifier = Modifier) {
                 Text(
                     text = "Enter 6 character code",
                     maxLines = 1,
-                    overflow = TextOverflow.Visible
+                    style = MaterialTheme.typography.labelMedium.copy(textAlign = TextAlign.Justify),
                 )
-            })
+            },
+        )
         Spacer(modifier = Modifier.width(10.dp))
-        FilledTonalButton(
+        Button(
             onClick = { onEnrollClick(classID) },
             modifier = Modifier.weight(3f),
             enabled = classID.length == 6
         ) {
-            Text(text = "Enroll", maxLines = 1, overflow = TextOverflow.Visible, fontSize = 18.sp)
+            Text(text = "Enroll", maxLines = 1, overflow = TextOverflow.Visible, style = MaterialTheme.typography.labelLarge)
         }
     }
 }

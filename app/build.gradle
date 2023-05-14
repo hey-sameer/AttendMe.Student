@@ -91,4 +91,7 @@ dependencies {
 
     // Zxing
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+
+    //Google Code scanner
+    implementation 'com.google.android.gms:play-services-code-scanner:16.0.0'
 }

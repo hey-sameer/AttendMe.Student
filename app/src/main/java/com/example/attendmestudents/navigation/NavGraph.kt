@@ -41,8 +41,8 @@ fun SetUpNavGraph(
         }
         composable(route = Screens.QRScannerScreen.route){
             val student = navHostController.previousBackStackEntry?.savedStateHandle?.get<StudentModel>("studentModel")
-            val qrViewModel: QRScannerViewModel = viewModel(initializer = {QRScannerViewModel(student!!)})
-            QrScannerScreen(qrViewModel,navHostController,context)
+            val qrViewModel: QRScannerViewModel = viewModel(initializer = {QRScannerViewModel(student!!, context)})
+            QrScannerScreen(qrViewModel,navHostController)
         }
     }
 }
